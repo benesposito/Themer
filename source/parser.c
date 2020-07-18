@@ -10,10 +10,21 @@
 #include <unistd.h>
 
 #define MAX_LINE_SIZE 255
+#define MAX_PATH_LENGTH 256
 
 #define CONCAT(a, b) a b
 #define SRC_DIR "/.config/themer/src/"
 #define BIN_DIR CONCAT(SRC_DIR, "../bin/")
+
+void getfullpath(char** fullpath, const char* path, const char* filename) {
+	bool endsInSlash = path[strlen(path) - 1] == '/';
+	*fullpath = malloc(sizeof(char) * (strlen(path) + strlen(filename) + (endsInSlash? 1 : 2)));
+
+	strcpy(*fullpath, path);
+	if(!endsInSlash)
+		strcat(*fullpath, "/");
+	strcat(*fullpath, filename);
+}
 
 bool parser(const struct arguments *args) {
 	char *in_path, *out_path;
@@ -52,11 +63,6 @@ bool parser(const struct arguments *args) {
 	DIR *in_dir = opendir(in_path);
 	DIR *out_dir = opendir(out_path);
 
-	if(!args->input_dirname) {
-		free(in_path);
-		free(out_path);
-	}
-
 	if(!in_dir) {
 		logger(error, "Input directory: %s\n", strerror(errno));
 		return false;
@@ -67,15 +73,30 @@ bool parser(const struct arguments *args) {
 		return false;
 	}
 
-	return parse_all_in_dir(in_dir, out_dir);
-}
-
-bool parse_all_in_dir(DIR *in_dir, DIR *out_dir) {
 	struct dirent *entry;
 
 	while((entry = readdir(in_dir)) != NULL) {
-		logger(info, "%s\n", entry->d_name);
+		if(entry->d_type == DT_REG) {
+			char *input_filename, *output_filename;
+			getfullpath(&input_filename, in_path, entry->d_name);
+			getfullpath(&output_filename, out_path, entry->d_name);
+
+			logger(debug, "Parsing: %s\n", input_filename);
+			if(!parse_config(input_filename, output_filename, args->theme))
+				return false;
+
+			free(input_filename);
+			free(output_filename);
+		}
 	}
+
+	if(!args->input_dirname) {
+		free(in_path);
+		free(out_path);
+	}
+
+	closedir(in_dir);
+	closedir(out_dir);
 
 	return true;
 }
@@ -93,11 +114,14 @@ bool parse_config(const char* input_filename, const char* output_filename, const
 	while(fgets(buff, MAX_LINE_SIZE, in_file)) {
 		line++;
 
-		if(strlen(buff) > 0)
-			buff[strlen(buff) - 1] = '\0';
+		size_t buff_length = strlen(buff);
+		size_t pre_length = strlen("{THEME:");
 
-		if(strcmp(buff, "{THEME:") > 0) {
-			strcpy(section_theme, buff + strlen("{THEME:"));
+		if(buff_length > 0)
+			buff[buff_length - 1] = '\0';
+
+		if(pre_length < buff_length && memcmp(buff, "{THEME:", pre_length) == 0) {
+			strcpy(section_theme, buff + pre_length);
 			section_theme[strlen(section_theme) - 1] = '\0';
 
 			if(strcmp(section_theme, "ENDTHEME") != 0) {
@@ -111,7 +135,7 @@ bool parse_config(const char* input_filename, const char* output_filename, const
 			continue;
 		}
 
-		if(!replace_mode || strcmp(target_theme, section_theme) == 0) {
+		if(!replace_mode || strcasecmp(target_theme, section_theme) == 0) {
 			logger(trace, "%d: writing line: %s\n", line, buff);
 			fprintf(out_file, "%s\n", buff);
 		}
@@ -120,6 +144,8 @@ bool parse_config(const char* input_filename, const char* output_filename, const
 	free(section_theme);
 	fclose(in_file);
 	fclose(out_file);
+
+	logger(info, "Wrote '%s' to '%s'\n", input_filename, output_filename);
 
 	return true;
 }

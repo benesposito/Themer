@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	if(arguments.input_dirname && !arguments.output_dirname) {
-		logger(error, "Output directory must be supplied with input directory\n");
+		logger(error, "Input directory must be supplied with an output directory\n");
 		return -1;
 	}
 
