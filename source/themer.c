@@ -13,7 +13,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 
 	switch(key) {
 		case 'd':
-			if(arg != NULL)
+			if(arg == NULL)
+				arguments->severity = 1;
+			else
 				arguments->severity = atoi(arg);
 			break;
 		case 'i':
@@ -24,6 +26,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 			break;
 		case 'f':
 			arguments->input_filename = arg;
+			break;
+		case 'p':
+			arguments->no_post = true;
 			break;
 		case ARGP_KEY_ARG:
 			if(!arguments->theme)
@@ -40,10 +45,11 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 
 int main(int argc, char* argv[]) {
 	struct argp_option options[] = {
-		{ "debug", 'd', "LEVEL", OPTION_ARG_OPTIONAL, "Debug flag, default = 2 (0 = trace, 1 = debug, 2 = info, 3 = warning, 4 = error)" },
+		{ "debug", 'd', "LEVEL", OPTION_ARG_OPTIONAL, "Debug flag, default = 2, LEVEL defaults to 1 (0 = trace, 1 = debug, 2 = info, 3 = warning, 4 = error)" },
 		{ "indir", 'i', "PATH", 0, "Input directory" },
 		{ "outdir", 'o', "PATH", 0, "Output directory" },
 		{ "file", 'f', "FILE", 0, "Input file" },
+		{ "no-post", 'p', 0, 0, "Do not run post script" },
 		{ 0 }
 	};
 
@@ -52,7 +58,8 @@ int main(int argc, char* argv[]) {
 		.input_filename = NULL,
 		.input_dirname = NULL,
 		.output_dirname = NULL,
-		.severity = 2
+		.severity = 2,
+		.no_post = false
 	};
 
 	struct argp argp = { options, parse_opt, "THEME" };
@@ -96,6 +103,12 @@ int main(int argc, char* argv[]) {
 	}
 
 	parser(&arguments);
+
+	if(!arguments.no_post) {
+		logger(info, "Calling themer-post script\n");
+		popen("sh ~/.config/themer/themer-post.sh", "r");
+		printf("here\n");
+	}
 
 	return 0;
 }
