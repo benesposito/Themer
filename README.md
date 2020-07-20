@@ -1,6 +1,6 @@
 # Themer
 
-Tool to manage many themes of ~/.config/ files.
+Tool to manage many themes of ~/.config/ files
 
 ## Installing
 
@@ -8,11 +8,11 @@ Run
 
 	make install
 
-** note that at the moment, themer gets installed to my personal ~/scripts/ directory, since it is not ready for nor anticipated that others will use it yet.
+** note that at the moment, themer gets installed to my personal ~/scripts/ directory, since it is not ready for nor anticipated that others will use it yet
 
 ## Purpose
 
-Themer is used to quickly switch between many slightly different versions of files. For example, if your i3 setup has a light and a dark theme, you can create one i3.config file with {THEME:DARK} and {THEME:LIGHT} headers (ended using the {THEME:ENDTHEME} header), and running `themer dark` or `themer light` will automatically create an i3 config using only the respective sections.
+Themer is used to quickly switch between many slightly different versions of files. For example, if your i3 setup has a light and a dark theme, you can create one i3.config file with {THEME:DARK} and {THEME:LIGHT} headers (ended using the {THEME:ENDTHEME} header), and running `themer dark` or `themer light` will automatically create an i3 config using only the respective sections
 
 ## Tutorial
 
@@ -22,7 +22,13 @@ Themer creates the following directories and files:
 * `~/.config/themer/bin/`
 * `~/.config/themer/themer-post.sh`
 
-The intent is that all config files will be moved to `~/.config/themer/src/`, which will output the themed versions to `~/.config/themer/bin/`. Symlinks will then be created by
+`~/.config/themer/src/` contains all tracked configs, including their {THEME} headers
+
+Running `themer THEME` writes the themed versions to `~/.config/themer/bin/`
+
+Symlinks created by the user link the themed `~/.config/themer/bin/` versions to their respective programs' config directory
+
+Any necessary commands to restart the config's program can be added to `~/.config/themer/themer-post.sh`, which gets called once the last config has been themed and written to `~/.config/themer/bin/`
 
 ## Example
 
