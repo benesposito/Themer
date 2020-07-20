@@ -32,7 +32,7 @@ Any necessary commands to restart the config's program can be added to `~/.confi
 
 ## Example
 
-1. Create ~/.config/themer/src/example.config:
+1. Create `~/.config/themer/src/example.config`:
 
 	I am an example! My theme is:
 	{THEME:DARK}
