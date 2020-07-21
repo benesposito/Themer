@@ -10,9 +10,11 @@ Run
 
 ** note that at the moment, themer gets installed to my personal ~/scripts/ directory, since it is not ready for nor anticipated that others will use it yet
 
+To change the install directory, edit makefile and modify the INSTALL_DIR variable
+
 ## Purpose
 
-Themer is used to quickly switch between many slightly different versions of files. For example, if your i3 setup has a light and a dark theme, you can create one i3.config file with {THEME:DARK} and {THEME:LIGHT} headers (ended using the {THEME:ENDTHEME} header), and running `themer dark` or `themer light` will automatically create an i3 config using only the respective sections
+Themer is used to quickly switch between many slightly different versions of files. For example, if your i3 setup has a light and a dark theme, you can create one i3.config file with `{THEME:DARK}` and `{THEME:LIGHT}` headers (ended using the `{THEME:ENDTHEME}` header), and running `themer dark` or `themer light` will automatically create an i3 config using only the respective sections
 
 ## Tutorial
 
@@ -22,7 +24,7 @@ Themer creates the following directories and files:
 * `~/.config/themer/bin/`
 * `~/.config/themer/themer-post.sh`
 
-`~/.config/themer/src/` contains all tracked configs, including their {THEME} headers
+`~/.config/themer/src/` contains all tracked configs, including their `{THEME}` headers
 
 Running `themer THEME` writes the themed versions to `~/.config/themer/bin/`
 
@@ -34,12 +36,12 @@ Any necessary commands to restart the config's program can be added to `~/.confi
 
 1. Create ~/.config/themer/src/example.config:
 
-	I am an example! My theme is:
-	{THEME:DARK}
-	dark
-	{THEME:LIGHT}
-	light
-	{THEME:ENDTHEME}
+		I am an example! My theme is:
+		{THEME:DARK}
+		dark
+		{THEME:LIGHT}
+		light
+		{THEME:ENDTHEME}
 
 2. Run
 
@@ -51,6 +53,7 @@ Any necessary commands to restart the config's program can be added to `~/.confi
 		example
 
 4. Run `themer dark` to:
+
 	a. Create `~/.config/themer/bin/example.config`:
 	
 		I am an example! My theme is:
