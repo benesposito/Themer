@@ -1,6 +1,6 @@
 .PHONY: all clean install uninstall backup
 
-CC = gcc -Wall -O0
+CC = gcc -Wall -g
 
 INSTALL_DIR = ~/scripts/bin
 CONFIG_DIR = ~/.config
@@ -52,3 +52,4 @@ $(THEMER_DIR):
 	mkdir $(THEMER_DIR)/src
 	mkdir $(THEMER_DIR)/$(BIN_DIR)
 	touch $(THEMER_DIR)/themer-post.sh
+	touch $(THEMER_DIR)/colors.ini

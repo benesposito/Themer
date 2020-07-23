@@ -58,4 +58,16 @@ Any necessary commands to restart the config's program can be added to `~/.confi
 	
 		I am an example! My theme is:
 		dark
+
 	b. Automatically call `~/.config/themer/themer-post.sh`
+
+## Headers
+
+Themer supports several headers, which take the format {HEADER:VALUE}
+
+* THEME
+	- Specifies a new theme section
+	- Lines within THEME headers will only be preserved if the value matches the argument passed at runtime
+	- The THEME header must be alone on its line, aside from whitespace.
+* COLOR
+	- Gets replaced with its definition in the colors.ini file

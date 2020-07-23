@@ -30,6 +30,12 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 		case 'p':
 			arguments->no_post = true;
 			break;
+		case 't':
+			arguments->theme = "light";
+			arguments->input_dirname = "../test";
+			arguments->output_dirname = "../out";
+			arguments->no_post = true;
+			break;
 		case ARGP_KEY_ARG:
 			if(!arguments->theme)
 				arguments->theme = arg;
@@ -50,6 +56,7 @@ int main(int argc, char* argv[]) {
 		{ "outdir", 'o', "PATH", 0, "Output directory" },
 		{ "file", 'f', "FILE", 0, "Input file" },
 		{ "no-post", 'p', 0, 0, "Do not run post script" },
+		{ "test", 't', 0, 0, "For testing" },
 		{ 0 }
 	};
 
