@@ -234,15 +234,15 @@ bool parser(const struct arguments *args) {
 	if(args->input_dirname)
 		in_path = args->input_dirname;
 	else {
-		in_path = malloc(sizeof(char) * (strlen(HOME_DIR) + strlen(SRC_DIR) + 1));
+		in_path = malloc(sizeof(char) * (strlen(HOME_DIR) + strlen(THEMER_DIR) + strlen(SRC_DIR) + 1));
 		getpath(in_path, 3, HOME_DIR, THEMER_DIR, SRC_DIR);
 	}
 
 	if(args->output_dirname)
 		out_path = args->output_dirname;
 	else {
-		out_path = malloc(sizeof(char) * (strlen(HOME_DIR) + strlen(SRC_DIR) + 1));
-		getpath(in_path, 3, HOME_DIR, THEMER_DIR, BIN_DIR);
+		out_path = malloc(sizeof(char) * (strlen(HOME_DIR) + strlen(THEMER_DIR) + strlen(SRC_DIR) + 1));
+		getpath(out_path, 3, HOME_DIR, THEMER_DIR, BIN_DIR);
 	}
 
 	logger(debug, "Input path: %s\n", in_path);

@@ -33,7 +33,7 @@ Symlinks created by the user link the themed `~/.config/themer/bin/` versions to
 
 Any necessary commands to restart the config's program can be added to `~/.config/themer/themer-post.sh`, which gets called once the last config has been themed and written to `~/.config/themer/bin/`
 
-`colors.ini` specifies colors based on theme which can get substituted into the themed version using the 'COLOR' header (e.g. `{COLOR:RED`})
+`colors.ini` specifies colors based on theme which can get substituted into the themed version using the 'COLOR' header (e.g. `{COLOR:RED}`)
 
 ## Example
 
@@ -62,11 +62,11 @@ Any necessary commands to restart the config's program can be added to `~/.confi
 		I am an example! My theme is:
 		dark
 
-	b. Automatically call `~/.config/themer/themer-post.sh`
+	b. Call `~/.config/themer/themer-post.sh`
 
 ## Headers
 
-Themer supports several headers, which take the format {HEADER:VALUE}
+Themer supports several headers, which take the format `{HEADER:VALUE}`
 
 * THEME
 	- Specifies a new theme section
