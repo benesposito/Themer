@@ -75,6 +75,7 @@ Themer supports several headers, which take the format {HEADER:VALUE}
 * COLOR
 	- Gets replaced with its definition in the colors.ini file
 		`~/.config/themer/colors.ini`
+
 			[DARK]
 			foreground=#ffffff
 			background=#000000
