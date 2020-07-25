@@ -95,7 +95,7 @@ static bool parse_line(const char* line, char* pre, enum header_type *header, ch
 
 	// Get matching groups from 'line'
 	regex_t regex;
-	regcomp(&regex, "(.*?)\\{(\\w*):(\\w*)\\}(.*)", REG_EXTENDED);
+	regcomp(&regex, "(.*?)\\{(\\w*):([A-Za-z-]*)\\}(.*)", REG_EXTENDED);
 	size_t n_groups = regex.re_nsub + 1;
 	regmatch_t *groups = malloc(n_groups * sizeof(regmatch_t));
 	int ret = regexec(&regex, line, n_groups, groups, 0);
@@ -136,7 +136,13 @@ static bool parse_line(const char* line, char* pre, enum header_type *header, ch
 			*header = unknown;
 
 		free(s_header);
-	}
+	} /* else {
+		logger(error, "Issue with regex matching\n");
+		int n_errlen = 50;
+		char* s_err = malloc(n_errlen * sizeof(char));
+		regerror(ret, &regex, s_err, n_errlen);
+		logger(error, "%s\n", s_err);
+	} */
 
 	free(groups);
 	return ret == 0;
@@ -160,9 +166,7 @@ static bool parse_config(const char* input_filename, const char* output_filename
 		enum header_type *header = malloc(sizeof(enum header_type));
 		char val[MAX_HEADER_VALUE_LENGTH];
 		
-		bool header_found = parse_line(buff, pre, header, val, post);
-
-		if(header_found) {
+		while(parse_line(buff, pre, header, val, post)) {
 			switch(*header) {
 				case theme:
 					if(strcmp(val, THEME_END_VALUE) == 0) {
