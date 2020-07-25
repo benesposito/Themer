@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "logger.h"
+#include "utils.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -13,31 +14,80 @@
 #define MAX_PATH_LENGTH 256
 #define MAX_HEADER_VALUE_LENGTH 30
 
-#define CONCAT(a, b) a b
-#define SRC_DIR "/.config/themer/src/"
-#define BIN_DIR CONCAT(SRC_DIR, "../bin/")
+#define MAX_COLOR_DEFS 50
+#define MAX_COLOR_NAME_LENGTH 30
+#define COLOR_CODE_LENGTH 8
+
+#define THEMER_DIR ".config/themer"
+#define SRC_DIR "src"
+#define BIN_DIR "bin"
 
 #define THEME_END_VALUE "ENDTHEME"
 
 #define COLORS_PATH 
 
-enum header_type { theme, color, unknown };
-
 struct color_entry {
-	char* name;
-	char* color;
+	char name[MAX_COLOR_NAME_LENGTH];
+	char hex[COLOR_CODE_LENGTH];
 };
 
-static char* HOME;
-static struct color_entry colors[50];
+enum header_type { theme, color, unknown };
 
-static void getfullpath(char* fullpath, const char* path, const char* filename) {
-	bool endsInSlash = path[strlen(path) - 1] == '/';
+char* HOME_DIR;
+struct color_entry colors[MAX_COLOR_DEFS];
+int n_colors;
 
-	strcpy(fullpath, path);
-	if(!endsInSlash)
-		strcat(fullpath, "/");
-	strcat(fullpath, filename);
+static int parse_colors(struct color_entry *colors, char* s_theme) { // returns -1 for failure, otherwise returns n_colors
+	char colors_file_path[MAX_PATH_LENGTH];
+	FILE* colors_file;
+	char buff[MAX_LINE_LENGTH];
+	bool found_target_header = false;
+
+	getpath(colors_file_path, 3, HOME_DIR, THEMER_DIR, "colors.ini");
+ 	colors_file = fopen(colors_file_path, "r");
+	logger(debug, "[PARSING COLORS] (%s)\n", colors_file_path);
+
+	if(!colors_file) {
+		logger(error, "colors.ini could not be found!\n");
+		return -1;
+	}
+
+	size_t n_colors = 0;
+
+	while(fgets(buff, MAX_LINE_LENGTH, colors_file)) {
+		char section_name[MAX_COLOR_NAME_LENGTH + 2];
+		int ret = sscanf(buff, "[%[^]]]", section_name);
+
+		if(ret == 1) {
+			logger(debug, "Found color header: [%s]\n", section_name);
+
+			if(strcasecmp(section_name, s_theme) == 0) {
+				if(!found_target_header)
+					found_target_header = true;
+				else {
+					logger(warning, "[%s] was defined twice in colors.ini! Using second definition", theme);
+				}
+			} else
+				found_target_header = false;
+		}
+
+		if(found_target_header) {
+			char key[MAX_COLOR_NAME_LENGTH + 1];
+			char value[COLOR_CODE_LENGTH + 1];
+
+			int ret = sscanf(buff, "%[^=]=%[^\n]\n", key, value);
+			if(ret == 2) {
+				logger(debug, "%s=%s\n", key, value);
+				strcpy(colors[n_colors].name, key);
+				strcpy(colors[n_colors].hex, value);
+				n_colors++;
+			}
+		}
+	}
+
+	logger(debug, LOGGER_SECTION_FOOTER);
+
+	return n_colors;
 }
 
 static bool parse_line(const char* line, char* pre, enum header_type *header, char* value, char* post) {
@@ -101,7 +151,9 @@ static bool parse_config(const char* input_filename, const char* output_filename
 	in_file = fopen(input_filename, "r");
 	out_file = fopen(output_filename, "w");
 
-	while(fgets(buff, MAX_LINE_LENGTH, in_file)) {
+	bool success = true;
+
+	while(fgets(buff, MAX_LINE_LENGTH, in_file) && success) {
 		line++;
 
 		char pre[MAX_LINE_LENGTH], post[MAX_LINE_LENGTH];
@@ -115,21 +167,39 @@ static bool parse_config(const char* input_filename, const char* output_filename
 				case theme:
 					if(strcmp(val, THEME_END_VALUE) == 0) {
 						strcpy(section_theme, "");
-						logger(trace, "%d: Ending section\n", line);
+						logger(debug, "%d: Ending section\n", line);
 					} else {
 						strcpy(section_theme, val);
-						logger(trace, "%d: New section: %s\n", line, section_theme);
+						logger(debug, "%d: New section: %s\n", line, section_theme);
 					}
 
 					strcpy(buff, "");
 
 					break;
 				case color:
-					logger(trace, "Color: %s\n", val); // TODO: get color from val
+					; // apparently this ';' is needed because the first line of a case can't be a variable declaration in C (??)
+					char hex[COLOR_CODE_LENGTH];
+					bool b_found_color = false;
 
-					strcpy(buff, pre);
-					strcat(buff, val);
-					strcat(buff, post);
+					for(size_t i = 0; i < n_colors; i++) {
+						if(strcmp(val, colors[i].name) == 0) {
+							strcpy(hex, colors[i].hex);
+							b_found_color = true;
+							break;
+						}
+					}
+
+					if(b_found_color) {
+						logger(debug, "%d: Color: %s\n", line, hex);
+
+						strcpy(buff, pre);
+						strcat(buff, hex);
+						strcat(buff, post);
+					} else {
+						logger(error, "Undefined color '%s' in '%s'\n", val, input_filename);
+						success = false;
+					}
+
 					break;
 				default:
 					logger(warning, "Unknown header in '%s' on line: %d\n", input_filename, line);
@@ -149,44 +219,31 @@ static bool parse_config(const char* input_filename, const char* output_filename
 	fclose(in_file);
 	fclose(out_file);
 
-	logger(info, "Wrote '%s' to '%s'\n", input_filename, output_filename);
+	if(success)
+		logger(info, "Wrote '%s' to '%s'\n", input_filename, output_filename);
+	else
+		remove(output_filename);
 
-	return true;
-}
-
-static bool parse_colors() {
 	return true;
 }
 
 bool parser(const struct arguments *args) {
-	HOME = getenv("HOME");
+	HOME_DIR = getenv("HOME");
 	char *in_path, *out_path;
 
-	if(args->input_filename) {
-		char* output_filename = malloc(sizeof(char) * (strlen(args->input_filename) + strlen(args->theme) + 2));
-		strcpy(output_filename, args->input_filename);
-		strcat(output_filename, ".");
-		strcat(output_filename, args->theme);
-
-		bool ret = parse_config(args->input_filename, output_filename, args->theme);
-
-		free(output_filename);
-		return ret;
+	if(args->input_dirname)
+		in_path = args->input_dirname;
+	else {
+		in_path = malloc(sizeof(char) * (strlen(HOME_DIR) + strlen(SRC_DIR) + 1));
+		getpath(in_path, 3, HOME_DIR, THEMER_DIR, SRC_DIR);
 	}
 
-	if(!args->input_dirname) {
-		in_path = malloc(sizeof(char) * (strlen(HOME) + strlen(SRC_DIR) + 1));
-		strcpy(in_path, HOME);
-		strcat(in_path, SRC_DIR);
-	} else
-		in_path = args->input_dirname;
-
-	if(!args->output_dirname) {
-		out_path = malloc(sizeof(char) * (strlen(HOME) + strlen(SRC_DIR) + 1));
-		strcpy(out_path, HOME);
-		strcat(out_path, BIN_DIR);
-	} else
+	if(args->output_dirname)
 		out_path = args->output_dirname;
+	else {
+		out_path = malloc(sizeof(char) * (strlen(HOME_DIR) + strlen(SRC_DIR) + 1));
+		getpath(in_path, 3, HOME_DIR, THEMER_DIR, BIN_DIR);
+	}
 
 	logger(debug, "Input path: %s\n", in_path);
 	logger(debug, "Output path: %s\n", out_path);
@@ -204,17 +261,34 @@ bool parser(const struct arguments *args) {
 		return false;
 	}
 
+	n_colors = parse_colors(colors, args->theme);
+
+	if(args->input_filename) {
+		char* output_filename = malloc(sizeof(char) * (strlen(args->input_filename) + strlen(args->theme) + 2));
+		strcpy(output_filename, args->input_filename);
+		strcat(output_filename, ".");
+		strcat(output_filename, args->theme);
+
+		bool ret = parse_config(args->input_filename, output_filename, args->theme);
+
+		free(output_filename);
+		return ret;
+	}
+
 	struct dirent *entry;
+	bool success = true;
 
 	while((entry = readdir(in_dir)) != NULL) {
 		if(entry->d_type == DT_REG) {
 			char input_filename[MAX_PATH_LENGTH], output_filename[MAX_PATH_LENGTH];
-			getfullpath(input_filename, in_path, entry->d_name);
-			getfullpath(output_filename, out_path, entry->d_name);
+			getpath(input_filename, 2, in_path, entry->d_name);
+			getpath(output_filename, 2, out_path, entry->d_name);
 
 			logger(debug, "Parsing: %s\n", input_filename);
-			if(!parse_config(input_filename, output_filename, args->theme))
-				return false;
+			if(!parse_config(input_filename, output_filename, args->theme)) {
+				success = false;
+				break;
+			}
 		}
 	}
 
@@ -226,5 +300,5 @@ bool parser(const struct arguments *args) {
 	closedir(in_dir);
 	closedir(out_dir);
 
-	return true;
+	return success;
 }

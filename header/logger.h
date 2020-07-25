@@ -1,5 +1,7 @@
 #pragma once
 
+#define LOGGER_SECTION_FOOTER "---------------------------\n"
+
 enum severity_level {
 	trace = 0,
 	debug = 1,

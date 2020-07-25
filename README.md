@@ -23,6 +23,7 @@ Themer creates the following directories and files:
 * `~/.config/themer/src/`
 * `~/.config/themer/bin/`
 * `~/.config/themer/themer-post.sh`
+* `~/.config/themer/colors.ini`
 
 `~/.config/themer/src/` contains all tracked configs, including their `{THEME}` headers
 
@@ -31,6 +32,8 @@ Running `themer THEME` writes the themed versions to `~/.config/themer/bin/`
 Symlinks created by the user link the themed `~/.config/themer/bin/` versions to their respective programs' config directory
 
 Any necessary commands to restart the config's program can be added to `~/.config/themer/themer-post.sh`, which gets called once the last config has been themed and written to `~/.config/themer/bin/`
+
+`colors.ini` specifies colors based on theme which can get substituted into the themed version using the 'COLOR' header (e.g. `{COLOR:RED`})
 
 ## Example
 
@@ -71,3 +74,13 @@ Themer supports several headers, which take the format {HEADER:VALUE}
 	- The THEME header must be alone on its line, aside from whitespace.
 * COLOR
 	- Gets replaced with its definition in the colors.ini file
+		`~/.config/themer/colors.ini`
+			[DARK]
+			foreground=#ffffff
+			background=#000000
+
+			[LIGHT]
+			foreground=#000000
+			background=#ffffff
+
+		In this case, using a dark theme would replace `{COLOR:foreground}` with `#ffffff`

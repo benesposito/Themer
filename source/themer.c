@@ -77,6 +77,7 @@ int main(int argc, char* argv[]) {
 		return ret;
 
 	set_logger_severity_level(arguments.severity);
+	logger(debug, "[ARGUMENTS]\n");
 
 	if(!arguments.theme) {
 		logger(error, "No theme specified\n");
@@ -108,6 +109,8 @@ int main(int argc, char* argv[]) {
 	} else if(arguments.input_filename) {
 		logger(debug, "Input file: %s\n", arguments.input_filename);
 	}
+
+	logger(debug, LOGGER_SECTION_FOOTER);
 
 	parser(&arguments);
 

@@ -32,8 +32,8 @@ else
 	@echo No $(THEMER_DIR) to backup!
 endif
 
-$(BIN_DIR)/themer: bin/themer.o bin/logger.o bin/parser.o | bin
-	$(CC) -o $(BIN_DIR)/themer bin/themer.o bin/logger.o bin/parser.o
+$(BIN_DIR)/themer: bin/themer.o bin/logger.o bin/parser.o bin/utils.o | bin
+	$(CC) -o $(BIN_DIR)/themer bin/themer.o bin/logger.o bin/parser.o bin/utils.o
 
 $(BIN_DIR)/themer.o: source/themer.c | bin
 	$(CC) -o $(BIN_DIR)/themer.o -I header/ source/themer.c -c
@@ -43,6 +43,9 @@ $(BIN_DIR)/logger.o: header/logger.h source/logger.c | bin
 
 $(BIN_DIR)/parser.o: header/parser.h source/parser.c | bin
 	$(CC) -o $(BIN_DIR)/parser.o -I header/ source/parser.c -c
+
+$(BIN_DIR)/utils.o: header/utils.h source/utils.c | bin
+	$(CC) -o $(BIN_DIR)/utils.o -I header/ source/utils.c -c
 
 $(BIN_DIR):
 	mkdir $(BIN_DIR)
